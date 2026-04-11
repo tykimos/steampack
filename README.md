@@ -1,8 +1,8 @@
 <div align="center">
 
-<img src="capture.jpg" width="600" alt="SteamPack Screenshot"/>
-
 # SteamPack
+
+<img src="capture.jpg" width="600" alt="SteamPack Screenshot"/>
 
 **Keep your Mac awake with a single click.**
 

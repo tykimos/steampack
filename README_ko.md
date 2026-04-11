@@ -1,8 +1,8 @@
 <div align="center">
 
-<img src="capture.jpg" width="600" alt="SteamPack 스크린샷"/>
-
 # SteamPack
+
+<img src="capture.jpg" width="600" alt="SteamPack 스크린샷"/>
 
 **클릭 한 번으로 Mac의 잠자기를 방지합니다.**
 
