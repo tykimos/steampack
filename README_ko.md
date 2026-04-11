@@ -81,29 +81,36 @@ open build/SteamPack.app
 
 SteamPack은 macOS Keychain에 저장된 비밀번호로 `sudo pmset -a disablesleep 1` (차단) 또는 `0` (허용) 명령어를 실행합니다.
 
-```
-┌─────────────────────────────────────────────────────┐
-│                  macOS 메뉴바                        │
-│                                                     │
-│   ┌───┐  클릭                                       │
-│   │ 👁 │ ──────→ ┌──────────────────┐               │
-│   └───┘          │ Sleep Enabled    │  ← 상태       │
-│                  │──────────────────│               │
-│                  │ Disable Sleep ⌘T │  ← 토글       │
-│                  │──────────────────│               │
-│                  │ Change Password  │               │
-│                  │ Quit          ⌘Q │               │
-│                  └──────────────────┘               │
-│                         │                           │
-│                         ▼                           │
-│              ┌────────────────────┐                 │
-│              │  macOS Keychain    │                 │
-│              │  (sudo 비밀번호)    │                 │
-│              └────────┬───────────┘                 │
-│                       ▼                             │
-│         echo $PW | sudo -S pmset                    │
-│              -a disablesleep 1/0                    │
-└─────────────────────────────────────────────────────┘
+```mermaid
+flowchart TB
+    subgraph MenuBar["macOS 메뉴바"]
+        ICON["👁 SteamPack 아이콘"]
+    end
+
+    subgraph Menu["드롭다운 메뉴"]
+        STATUS["Sleep Enabled / Disabled"]
+        TOGGLE["Disable Sleep ⌘T"]
+        CHANGEPW["Change Password"]
+        QUIT["Quit ⌘Q"]
+    end
+
+    subgraph Security["보안 레이어"]
+        KEYCHAIN["🔑 macOS Keychain\n(sudo 비밀번호)"]
+    end
+
+    subgraph System["macOS 시스템"]
+        PMSET["sudo pmset -a disablesleep 1/0"]
+    end
+
+    ICON -->|클릭| Menu
+    TOGGLE --> KEYCHAIN
+    KEYCHAIN -->|"stdin 파이프"| PMSET
+    PMSET -->|"상태 변경"| STATUS
+
+    style MenuBar fill:#e8f4fd,stroke:#2196F3,color:#1565C0
+    style Menu fill:#fff3e0,stroke:#FF9800,color:#E65100
+    style Security fill:#e8f5e9,stroke:#4CAF50,color:#2E7D32
+    style System fill:#fce4ec,stroke:#E91E63,color:#880E4F
 ```
 
 ---

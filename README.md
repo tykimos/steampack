@@ -81,29 +81,36 @@ open build/SteamPack.app
 
 SteamPack executes `sudo pmset -a disablesleep 1` (disable) or `0` (enable) using the password stored in your macOS Keychain.
 
-```
-┌─────────────────────────────────────────────────────┐
-│                  macOS Menu Bar                     │
-│                                                     │
-│   ┌───┐  Click                                     │
-│   │ 👁 │ ──────→ ┌──────────────────┐               │
-│   └───┘          │ Sleep Enabled    │  ← status     │
-│                  │──────────────────│               │
-│                  │ Disable Sleep ⌘T │  ← toggle     │
-│                  │──────────────────│               │
-│                  │ Change Password  │               │
-│                  │ Quit          ⌘Q │               │
-│                  └──────────────────┘               │
-│                         │                           │
-│                         ▼                           │
-│              ┌────────────────────┐                 │
-│              │  macOS Keychain    │                 │
-│              │  (sudo password)   │                 │
-│              └────────┬───────────┘                 │
-│                       ▼                             │
-│         echo $PW | sudo -S pmset                    │
-│              -a disablesleep 1/0                    │
-└─────────────────────────────────────────────────────┘
+```mermaid
+flowchart TB
+    subgraph MenuBar["macOS Menu Bar"]
+        ICON["👁 SteamPack Icon"]
+    end
+
+    subgraph Menu["Drop-down Menu"]
+        STATUS["Sleep Enabled / Disabled"]
+        TOGGLE["Disable Sleep ⌘T"]
+        CHANGEPW["Change Password"]
+        QUIT["Quit ⌘Q"]
+    end
+
+    subgraph Security["Security Layer"]
+        KEYCHAIN["🔑 macOS Keychain\n(sudo password)"]
+    end
+
+    subgraph System["macOS System"]
+        PMSET["sudo pmset -a disablesleep 1/0"]
+    end
+
+    ICON -->|Click| Menu
+    TOGGLE --> KEYCHAIN
+    KEYCHAIN -->|"stdin pipe"| PMSET
+    PMSET -->|"State changed"| STATUS
+
+    style MenuBar fill:#e8f4fd,stroke:#2196F3,color:#1565C0
+    style Menu fill:#fff3e0,stroke:#FF9800,color:#E65100
+    style Security fill:#e8f5e9,stroke:#4CAF50,color:#2E7D32
+    style System fill:#fce4ec,stroke:#E91E63,color:#880E4F
 ```
 
 ---
