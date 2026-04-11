@@ -1,54 +1,51 @@
-<p align="center">
-  <img src="https://img.icons8.com/sf-symbols/96/eye.png" width="80" alt="SteamPack Icon"/>
-</p>
+<div align="center">
 
-<h1 align="center">SteamPack</h1>
+<img src="capture.jpg" width="600" alt="SteamPack Screenshot"/>
 
-<p align="center">
-  <strong>macOS menu bar app to prevent your Mac from sleeping</strong>
-</p>
+# SteamPack
 
-<p align="center">
-  <img src="https://img.shields.io/badge/platform-macOS%2013%2B-blue?logo=apple" alt="Platform"/>
-  <img src="https://img.shields.io/badge/language-Swift-F05138?logo=swift&logoColor=white" alt="Swift"/>
-  <img src="https://img.shields.io/badge/license-MIT-green" alt="License"/>
-  <img src="https://img.shields.io/badge/build-swiftc-lightgrey" alt="Build"/>
-</p>
+**Keep your Mac awake with a single click.**
 
-<p align="center">
-  <a href="README_ko.md">한국어</a>
-</p>
+[![MIT License](https://img.shields.io/badge/license-MIT-blue?style=for-the-badge)](LICENSE)
+[![macOS](https://img.shields.io/badge/macOS-13%2B-000000?style=for-the-badge&logo=apple&logoColor=white)](https://www.apple.com/macos/)
+[![Swift](https://img.shields.io/badge/Swift-F05138?style=for-the-badge&logo=swift&logoColor=white)](https://swift.org)
+[![Build](https://img.shields.io/badge/build-swiftc-lightgrey?style=for-the-badge)](scripts/build.sh)
+
+*Toggle · Store · Forget — sleep control from the menu bar.*
+
+[Getting Started](#-getting-started) · [How It Works](#-how-it-works) · [Usage](#-usage) · [Build](#-build-from-source) · [Architecture](#-architecture)
+
+</div>
 
 ---
 
-## What is SteamPack?
+## What is this?
 
-SteamPack is a lightweight macOS menu bar utility that toggles your Mac's sleep mode with a single click. It uses `pmset -a disablesleep` under the hood — no more typing long terminal commands.
+SteamPack is a **lightweight macOS menu bar utility** that toggles your Mac's sleep mode with a single click. It runs `pmset -a disablesleep` under the hood — no more typing long terminal commands.
 
-### Menu Bar Icons
+> **Why "SteamPack"?** — Like a steam-powered jetpack that keeps you flying, SteamPack keeps your Mac running without ever touching down to sleep.
 
-| State | Icon | Meaning |
-|-------|------|---------|
-| Normal | `eye.half.closed.fill` | Sleep is **enabled** — Mac can sleep normally |
-| Active | `eye.trianglebadge.exclamationmark.fill` | Sleep is **disabled** — Mac stays awake |
+---
 
-## Features
+## ✨ Features
 
 - **One-click toggle** — Enable or disable sleep from the menu bar
-- **Secure password storage** — sudo password is stored in macOS Keychain
-- **Lightweight** — No dock icon, no window, just a menu bar icon
-- **Universal Binary** — Runs natively on both Apple Silicon and Intel Macs
-- **No dependencies** — Built with pure AppKit, no third-party libraries
+- **Secure password storage** — sudo password stored in macOS Keychain
+- **Zero footprint** — No dock icon, no window, just a menu bar icon
+- **Universal Binary** — Runs natively on Apple Silicon and Intel
+- **No dependencies** — Pure AppKit, no third-party libraries
 
-## Installation
+---
 
-### Option 1: Download DMG
+## 🚀 Getting Started
+
+### Download DMG
 
 1. Download `SteamPack.dmg` from [Releases](../../releases)
-2. Open the DMG and drag **SteamPack** to **Applications**
-3. Launch SteamPack from Applications
+2. Open the DMG → drag **SteamPack** to **Applications**
+3. Launch SteamPack
 
-### Option 2: Build from Source
+### Build from Source
 
 ```bash
 git clone https://github.com/tykimos/steampack.git
@@ -57,71 +54,95 @@ bash scripts/build.sh
 open build/SteamPack.app
 ```
 
-**Requirements:** Xcode Command Line Tools (`xcode-select --install`)
+> **Requires:** Xcode Command Line Tools (`xcode-select --install`)
 
-## Usage
+---
 
-1. **Launch** — SteamPack appears as an eye icon in the menu bar
-2. **First run** — Enter your sudo password (stored securely in Keychain)
-3. **Toggle** — Click the icon and select **Disable Sleep** / **Enable Sleep**
-4. **Change password** — Click the icon → **Change Password**
-5. **Quit** — Click the icon → **Quit** (or `Cmd+Q`)
+## 👁 Usage
 
-### Menu Items
+| Step | Action |
+|------|--------|
+| **Launch** | Eye icon appears in the menu bar |
+| **First run** | Enter sudo password (stored in Keychain) |
+| **Toggle** | Click icon → **Disable Sleep** / **Enable Sleep** |
+| **Change password** | Click icon → **Change Password** |
+| **Quit** | Click icon → **Quit** (`⌘Q`) |
 
-| Item | Description |
-|------|-------------|
-| Sleep Enabled / Sleep Disabled | Current status (read-only) |
-| Enable Sleep / Disable Sleep | Toggle sleep mode |
-| Change Password | Update stored sudo password |
-| Quit | Exit SteamPack |
+### Menu Bar Icons
 
-## How It Works
+| Icon | State | Meaning |
+|------|-------|---------|
+| `eye.half.closed.fill` | Normal | Sleep **enabled** — Mac can sleep |
+| `eye.trianglebadge.exclamationmark.fill` | Active | Sleep **disabled** — Mac stays awake |
 
-SteamPack executes `sudo pmset -a disablesleep 1` (disable sleep) or `sudo pmset -a disablesleep 0` (enable sleep) using the password stored in your macOS Keychain.
+---
+
+## ⚙️ How It Works
+
+SteamPack executes `sudo pmset -a disablesleep 1` (disable) or `0` (enable) using the password stored in your macOS Keychain.
 
 ```
-┌─────────────────────────────────────────┐
-│           macOS Menu Bar                │
-│   ┌───┐                                │
-│   │ 👁 │ ← SteamPack icon              │
-│   └─┬─┘                                │
-│     │                                   │
-│     ▼                                   │
-│  ┌──────────────────┐                   │
-│  │ Sleep Enabled    │ ← status          │
-│  │──────────────────│                   │
-│  │ Disable Sleep  ⌘T│ ← toggle         │
-│  │──────────────────│                   │
-│  │ Change Password  │                   │
-│  │ Quit           ⌘Q│                   │
-│  └──────────────────┘                   │
-└─────────────────────────────────────────┘
+┌─────────────────────────────────────────────────────┐
+│                  macOS Menu Bar                     │
+│                                                     │
+│   ┌───┐  Click                                     │
+│   │ 👁 │ ──────→ ┌──────────────────┐               │
+│   └───┘          │ Sleep Enabled    │  ← status     │
+│                  │──────────────────│               │
+│                  │ Disable Sleep ⌘T │  ← toggle     │
+│                  │──────────────────│               │
+│                  │ Change Password  │               │
+│                  │ Quit          ⌘Q │               │
+│                  └──────────────────┘               │
+│                         │                           │
+│                         ▼                           │
+│              ┌────────────────────┐                 │
+│              │  macOS Keychain    │                 │
+│              │  (sudo password)   │                 │
+│              └────────┬───────────┘                 │
+│                       ▼                             │
+│         echo $PW | sudo -S pmset                    │
+│              -a disablesleep 1/0                    │
+└─────────────────────────────────────────────────────┘
 ```
 
-## Project Structure
+---
+
+## 🏗 Architecture
 
 ```
 steampack/
 ├── src/
-│   ├── AppMain.swift          # App entry point, NSStatusItem menu bar
+│   ├── AppMain.swift          # Entry point, NSStatusItem menu bar
 │   ├── SleepToggle.swift      # pmset execution & state detection
 │   ├── KeychainHelper.swift   # Keychain Services wrapper
-│   └── PasswordPrompt.swift   # Password input dialog
+│   └── PasswordPrompt.swift   # Secure password input dialog
 ├── scripts/
 │   ├── build.sh               # Build automation (swiftc)
 │   └── create-dmg.sh          # DMG packaging (hdiutil)
 ├── AppInfo.plist              # App bundle configuration
-└── README.md
+├── capture.jpg                # Screenshot
+├── README.md                  # English
+└── README_ko.md               # 한국어
 ```
 
-## Security
+---
 
-- Passwords are stored exclusively in **macOS Keychain** (service: `com.steampack.sudo`)
-- Password is passed to sudo via stdin pipe — not visible in process list
-- If authentication fails, the app prompts for re-entry
+## 🔒 Security
+
+- Passwords stored exclusively in **macOS Keychain** (`com.steampack.sudo`)
+- Password passed to sudo via **stdin pipe** — not visible in process list
+- Authentication failure triggers password re-entry
 - Ad-hoc code signed
 
-## License
+---
 
-MIT License. See [LICENSE](LICENSE) for details.
+## 📄 License
+
+MIT License — see [LICENSE](LICENSE) for details.
+
+<div align="center">
+
+*Built with ❤️ and [Claude Code](https://claude.ai/code)*
+
+</div>
