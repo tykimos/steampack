@@ -1,3 +1,9 @@
+<div align="right">
+
+[![한국어](https://img.shields.io/badge/lang-한국어-red?style=flat-square)](README_ko.md)
+
+</div>
+
 <div align="center">
 
 # SteamPack

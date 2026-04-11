@@ -1,3 +1,9 @@
+<div align="right">
+
+[![English](https://img.shields.io/badge/lang-English-blue?style=flat-square)](README.md)
+
+</div>
+
 <div align="center">
 
 # SteamPack
