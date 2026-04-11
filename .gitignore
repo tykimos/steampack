@@ -1,0 +1,24 @@
+# Build artifacts
+build/
+dist/
+
+# macOS
+.DS_Store
+*.swp
+*~
+
+# Xcode
+*.xcodeproj/
+*.xcworkspace/
+DerivedData/
+xcuserdata/
+
+# Claude Code / OMC
+.claude/
+.omc/
+
+# Reference projects
+ref/
+
+# Workspace
+_workspace/
