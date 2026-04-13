@@ -8,7 +8,13 @@ class AppDelegate: NSObject, NSApplicationDelegate {
     // Menu items that need updating
     private var statusMenuItem: NSMenuItem!
     private var toggleMenuItem: NSMenuItem!
+    private var scheduledMenuItem: NSMenuItem!
     private var loginItemMenuItem: NSMenuItem!
+
+    // Scheduled sleep timer
+    private var sleepTimer: Timer?
+    private var timerEndDate: Date?
+    private var countdownTimer: Timer?
 
     func applicationDidFinishLaunching(_ notification: Notification) {
         NSApp.setActivationPolicy(.accessory)
@@ -35,6 +41,33 @@ class AppDelegate: NSObject, NSApplicationDelegate {
         toggleMenuItem.target = self
         menu.addItem(toggleMenuItem)
 
+        // Scheduled sleep submenu
+        scheduledMenuItem = NSMenuItem(title: "Scheduled Sleep", action: nil, keyEquivalent: "")
+        let scheduledSubmenu = NSMenu()
+        let durations: [(String, TimeInterval)] = [
+            ("10 Minutes", 10 * 60),
+            ("30 Minutes", 30 * 60),
+            ("1 Hour", 60 * 60),
+            ("2 Hours", 2 * 60 * 60),
+            ("4 Hours", 4 * 60 * 60),
+        ]
+        for (title, seconds) in durations {
+            let item = NSMenuItem(title: title, action: #selector(scheduleSleep(_:)), keyEquivalent: "")
+            item.target = self
+            item.tag = Int(seconds)
+            scheduledSubmenu.addItem(item)
+        }
+        scheduledSubmenu.addItem(NSMenuItem.separator())
+        let cancelItem = NSMenuItem(title: "Cancel Timer", action: #selector(cancelScheduledSleep), keyEquivalent: "")
+        cancelItem.target = self
+        scheduledSubmenu.addItem(cancelItem)
+        scheduledMenuItem.submenu = scheduledSubmenu
+        if let image = NSImage(systemSymbolName: "hourglass.badge.eye", accessibilityDescription: "Scheduled Sleep") {
+            image.isTemplate = true
+            scheduledMenuItem.image = image
+        }
+        menu.addItem(scheduledMenuItem)
+
         menu.addItem(NSMenuItem.separator())
 
         loginItemMenuItem = NSMenuItem(title: loginItemText(), action: #selector(toggleLoginItem), keyEquivalent: "")
@@ -53,7 +86,14 @@ class AppDelegate: NSObject, NSApplicationDelegate {
     }
 
     private func updateIcon() {
-        let name = sleepToggle.isDisableSleep ? "eye.fill" : "eye.half.closed.fill"
+        let name: String
+        if sleepTimer != nil {
+            name = "hourglass.badge.eye"
+        } else if sleepToggle.isDisableSleep {
+            name = "eye.fill"
+        } else {
+            name = "eye.half.closed.fill"
+        }
         if let image = NSImage(systemSymbolName: name, accessibilityDescription: "Sleep Toggle") {
             image.isTemplate = true
             statusItem.button?.image = image
@@ -68,7 +108,17 @@ class AppDelegate: NSObject, NSApplicationDelegate {
     }
 
     private func statusText() -> String {
-        sleepToggle.isDisableSleep ? "Sleep Disabled" : "Sleep Enabled"
+        if let endDate = timerEndDate {
+            let remaining = max(0, endDate.timeIntervalSinceNow)
+            let hours = Int(remaining) / 3600
+            let minutes = (Int(remaining) % 3600) / 60
+            if hours > 0 {
+                return "Sleep in \(hours)h \(minutes)m"
+            } else {
+                return "Sleep in \(minutes)m"
+            }
+        }
+        return sleepToggle.isDisableSleep ? "Sleep Disabled" : "Sleep Enabled"
     }
 
     private func toggleText() -> String {
@@ -101,6 +151,70 @@ class AppDelegate: NSObject, NSApplicationDelegate {
         updateMenu()
     }
 
+    @objc private func scheduleSleep(_ sender: NSMenuItem) {
+        let seconds = TimeInterval(sender.tag)
+
+        // If sleep is currently enabled, disable it first
+        if !sleepToggle.isDisableSleep {
+            guard let password = KeychainHelper.load() else {
+                promptPassword()
+                return
+            }
+            let result = sleepToggle.toggle(password: password)
+            switch result {
+            case .success:
+                break
+            case .wrongPassword:
+                KeychainHelper.delete()
+                promptPassword()
+                return
+            case .failed:
+                return
+            }
+        }
+
+        // Cancel any existing timer
+        sleepTimer?.invalidate()
+        countdownTimer?.invalidate()
+
+        // Set the end date and start timers
+        timerEndDate = Date().addingTimeInterval(seconds)
+
+        sleepTimer = Timer.scheduledTimer(withTimeInterval: seconds, repeats: false) { [weak self] _ in
+            self?.timerFired()
+        }
+
+        // Update the countdown display every 30 seconds
+        countdownTimer = Timer.scheduledTimer(withTimeInterval: 30, repeats: true) { [weak self] _ in
+            self?.updateMenu()
+        }
+
+        updateMenu()
+    }
+
+    @objc private func cancelScheduledSleep() {
+        sleepTimer?.invalidate()
+        sleepTimer = nil
+        countdownTimer?.invalidate()
+        countdownTimer = nil
+        timerEndDate = nil
+        updateMenu()
+    }
+
+    private func timerFired() {
+        sleepTimer = nil
+        countdownTimer?.invalidate()
+        countdownTimer = nil
+        timerEndDate = nil
+
+        // Re-enable sleep
+        if sleepToggle.isDisableSleep {
+            guard let password = KeychainHelper.load() else { return }
+            _ = sleepToggle.toggle(password: password)
+        }
+        updateMenu()
+    }
+
     @objc private func toggleSleep() {
         guard let password = KeychainHelper.load() else {
             promptPassword()
@@ -110,6 +224,8 @@ class AppDelegate: NSObject, NSApplicationDelegate {
         let result = sleepToggle.toggle(password: password)
         switch result {
         case .success:
+            // Cancel any scheduled timer on manual toggle
+            cancelScheduledSleep()
             updateMenu()
         case .wrongPassword:
             KeychainHelper.delete()
