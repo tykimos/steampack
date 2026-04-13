@@ -36,6 +36,7 @@ SteamPack is a **lightweight macOS menu bar utility** that toggles your Mac's sl
 ## ✨ Features
 
 - **One-click toggle** — Enable or disable sleep from the menu bar
+- **Start at Login** — Optional auto-start when you log in
 - **Secure password storage** — sudo password stored in macOS Keychain
 - **Zero footprint** — No dock icon, no window, just a menu bar icon
 - **Universal Binary** — Runs natively on Apple Silicon and Intel
@@ -79,7 +80,7 @@ open build/SteamPack.app
 | Icon | State | Meaning |
 |------|-------|---------|
 | `eye.half.closed.fill` | Normal | Sleep **enabled** — Mac can sleep |
-| `eye.trianglebadge.exclamationmark.fill` | Active | Sleep **disabled** — Mac stays awake |
+| `eye.fill` | Active | Sleep **disabled** — Mac stays awake |
 
 ---
 
