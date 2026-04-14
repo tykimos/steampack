@@ -85,6 +85,8 @@ open build/SteamPack.app
 | `eye.fill` | Active | Sleep **disabled** — Mac stays awake |
 | `hourglass.badge.eye` + countdown | Timer | Sleep disabled for set duration — countdown shown as `MM:SS` |
 
+<img src="timer.jpg" width="600" alt="Scheduled Sleep Timer"/>
+
 ---
 
 ## ⚙️ How It Works

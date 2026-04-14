@@ -85,6 +85,8 @@ open build/SteamPack.app
 | `eye.fill` | 활성 | 잠자기 **차단** — Mac이 깨어 있음 |
 | `hourglass.badge.eye` + 카운트다운 | 타이머 | 설정 시간 동안 잠자기 차단 — `MM:SS` 형태로 표시 |
 
+<img src="timer.jpg" width="600" alt="예약 잠자기 타이머"/>
+
 ---
 
 ## ⚙️ 동작 원리
