@@ -62,10 +62,6 @@ class AppDelegate: NSObject, NSApplicationDelegate {
         cancelItem.target = self
         scheduledSubmenu.addItem(cancelItem)
         scheduledMenuItem.submenu = scheduledSubmenu
-        if let image = NSImage(systemSymbolName: "hourglass.badge.eye", accessibilityDescription: "Scheduled Sleep") {
-            image.isTemplate = true
-            scheduledMenuItem.image = image
-        }
         menu.addItem(scheduledMenuItem)
 
         menu.addItem(NSMenuItem.separator())
@@ -97,6 +93,21 @@ class AppDelegate: NSObject, NSApplicationDelegate {
         if let image = NSImage(systemSymbolName: name, accessibilityDescription: "Sleep Toggle") {
             image.isTemplate = true
             statusItem.button?.image = image
+        }
+
+        // Show countdown next to icon
+        if let endDate = timerEndDate {
+            let remaining = max(0, Int(endDate.timeIntervalSinceNow))
+            let hours = remaining / 3600
+            let minutes = (remaining % 3600) / 60
+            let seconds = remaining % 60
+            if hours > 0 {
+                statusItem.button?.title = String(format: " %d:%02d:%02d", hours, minutes, seconds)
+            } else {
+                statusItem.button?.title = String(format: " %02d:%02d", minutes, seconds)
+            }
+        } else {
+            statusItem.button?.title = ""
         }
     }
 
@@ -184,9 +195,9 @@ class AppDelegate: NSObject, NSApplicationDelegate {
             self?.timerFired()
         }
 
-        // Update the countdown display every 30 seconds
-        countdownTimer = Timer.scheduledTimer(withTimeInterval: 30, repeats: true) { [weak self] _ in
-            self?.updateMenu()
+        // Update the countdown display every second
+        countdownTimer = Timer.scheduledTimer(withTimeInterval: 1, repeats: true) { [weak self] _ in
+            self?.updateIcon()
         }
 
         updateMenu()
