@@ -49,19 +49,22 @@ class SleepToggle {
     func toggle(password: String) -> ToggleResult {
         let newValue = isDisableSleep ? "0" : "1"
 
-        let escaped = password.replacingOccurrences(of: "'", with: "'\\''")
-        let script = "echo '\(escaped)' | /usr/bin/sudo -S /usr/bin/pmset -a disablesleep \(newValue)"
-
+        // Run sudo directly and write the password to its stdin, so the password
+        // never appears in any process's arguments (visible to `ps`).
         let process = Process()
-        process.executableURL = URL(fileURLWithPath: "/bin/bash")
-        process.arguments = ["-c", script]
+        process.executableURL = URL(fileURLWithPath: "/usr/bin/sudo")
+        process.arguments = ["-S", "-p", "", "/usr/bin/pmset", "-a", "disablesleep", newValue]
 
+        let stdinPipe = Pipe()
         let stderrPipe = Pipe()
+        process.standardInput = stdinPipe
         process.standardOutput = FileHandle.nullDevice
         process.standardError = stderrPipe
 
         do {
             try process.run()
+            stdinPipe.fileHandleForWriting.write(Data((password + "\n").utf8))
+            try? stdinPipe.fileHandleForWriting.close()
             process.waitUntilExit()
         } catch {
             return .failed(error.localizedDescription)
