@@ -163,12 +163,16 @@ class AppDelegate: NSObject, NSApplicationDelegate {
     }
 
     @objc private func scheduleSleep(_ sender: NSMenuItem) {
-        let seconds = TimeInterval(sender.tag)
+        startScheduledSleep(seconds: TimeInterval(sender.tag), retry: true)
+    }
 
+    private func startScheduledSleep(seconds: TimeInterval, retry: Bool) {
         // If sleep is currently enabled, disable it first
         if !sleepToggle.isDisableSleep {
             guard let password = KeychainHelper.load() else {
-                promptPassword()
+                if promptPassword() && retry {
+                    startScheduledSleep(seconds: seconds, retry: false)
+                }
                 return
             }
             let result = sleepToggle.toggle(password: password)
@@ -177,9 +181,12 @@ class AppDelegate: NSObject, NSApplicationDelegate {
                 break
             case .wrongPassword:
                 KeychainHelper.delete()
-                promptPassword()
+                if promptPassword(message: "Incorrect password. Please try again.") && retry {
+                    startScheduledSleep(seconds: seconds, retry: false)
+                }
                 return
-            case .failed:
+            case .failed(let message):
+                showError("pmset failed: \(message)")
                 return
             }
         }
@@ -218,17 +225,46 @@ class AppDelegate: NSObject, NSApplicationDelegate {
         countdownTimer = nil
         timerEndDate = nil
 
-        // Re-enable sleep
+        // Re-enable sleep. If this fails the Mac stays awake, so never fail silently.
         if sleepToggle.isDisableSleep {
-            guard let password = KeychainHelper.load() else { return }
-            _ = sleepToggle.toggle(password: password)
+            reenableSleepAfterTimer()
         }
+        sleepToggle.refresh()
         updateMenu()
     }
 
+    private func reenableSleepAfterTimer() {
+        let result: SleepToggle.ToggleResult
+        if let password = KeychainHelper.load() {
+            result = sleepToggle.toggle(password: password)
+        } else {
+            result = .wrongPassword
+        }
+
+        switch result {
+        case .success:
+            return
+        case .wrongPassword:
+            KeychainHelper.delete()
+            let message = "The timer ended, but sleep could not be re-enabled. Enter your sudo password to re-enable sleep."
+            if promptPassword(message: message), let password = KeychainHelper.load(),
+               case .failed(let error) = sleepToggle.toggle(password: password) {
+                showError("pmset failed: \(error)")
+            }
+        case .failed(let error):
+            showError("The timer ended, but sleep could not be re-enabled.\n\npmset failed: \(error)")
+        }
+    }
+
     @objc private func toggleSleep() {
+        performToggle(retry: true)
+    }
+
+    private func performToggle(retry: Bool) {
         guard let password = KeychainHelper.load() else {
-            promptPassword()
+            if promptPassword() && retry {
+                performToggle(retry: false)
+            }
             return
         }
 
@@ -240,37 +276,53 @@ class AppDelegate: NSObject, NSApplicationDelegate {
             updateMenu()
         case .wrongPassword:
             KeychainHelper.delete()
-            let alert = NSAlert()
-            alert.messageText = "SteamPack"
-            alert.informativeText = "Incorrect password. Please try again."
-            alert.alertStyle = .warning
-            alert.addButton(withTitle: "확인")
-            alert.runModal()
-            promptPassword()
+            if promptPassword(message: "Incorrect password. Please try again.") && retry {
+                performToggle(retry: false)
+            }
         case .failed(let message):
-            let alert = NSAlert()
-            alert.messageText = "Error"
-            alert.informativeText = "pmset failed: \(message)"
-            alert.alertStyle = .critical
-            alert.addButton(withTitle: "확인")
-            alert.runModal()
+            showError("pmset failed: \(message)")
         }
     }
 
     @objc private func changePassword() {
-        if let pw = PasswordPrompt.show(message: "Enter new sudo password") {
-            KeychainHelper.save(password: pw)
-        }
+        promptPassword(message: "Enter new sudo password")
     }
 
     @objc private func quitApp() {
         NSApp.terminate(nil)
     }
 
-    private func promptPassword() {
-        if let pw = PasswordPrompt.show() {
-            KeychainHelper.save(password: pw)
+    /// Asks for the sudo password until a correct one is entered or the user cancels.
+    /// The password is checked with `sudo -v` before it is saved to the Keychain.
+    /// Returns true when a verified password was saved.
+    @discardableResult
+    private func promptPassword(message: String = "Enter your sudo password") -> Bool {
+        // Menu bar (accessory) apps are not frontmost, so the dialog would open behind other windows.
+        NSApp.activate(ignoringOtherApps: true)
+        var message = message
+        while let pw = PasswordPrompt.show(message: message) {
+            switch sleepToggle.verifyPassword(pw) {
+            case .success:
+                KeychainHelper.save(password: pw)
+                return true
+            case .wrongPassword:
+                message = "Incorrect password. Please try again."
+            case .failed(let error):
+                showError("sudo failed: \(error)")
+                return false
+            }
         }
+        return false
+    }
+
+    private func showError(_ message: String) {
+        NSApp.activate(ignoringOtherApps: true)
+        let alert = NSAlert()
+        alert.messageText = "Error"
+        alert.informativeText = message
+        alert.alertStyle = .critical
+        alert.addButton(withTitle: "확인")
+        alert.runModal()
     }
 }
 

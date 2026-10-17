@@ -81,4 +81,38 @@ class SleepToggle {
         isDisableSleep = !isDisableSleep
         return .success
     }
+
+    /// Checks the password with `sudo -v` without running any command.
+    /// The password is written to sudo's stdin, never passed as an argument.
+    func verifyPassword(_ password: String) -> ToggleResult {
+        let process = Process()
+        process.executableURL = URL(fileURLWithPath: "/usr/bin/sudo")
+        process.arguments = ["-k", "-S", "-p", "", "-v"]
+
+        let stdinPipe = Pipe()
+        let stderrPipe = Pipe()
+        process.standardInput = stdinPipe
+        process.standardOutput = FileHandle.nullDevice
+        process.standardError = stderrPipe
+
+        do {
+            try process.run()
+            stdinPipe.fileHandleForWriting.write(Data((password + "\n").utf8))
+            try? stdinPipe.fileHandleForWriting.close()
+            process.waitUntilExit()
+        } catch {
+            return .failed(error.localizedDescription)
+        }
+
+        if process.terminationStatus == 0 {
+            return .success
+        }
+        let stderrData = stderrPipe.fileHandleForReading.readDataToEndOfFile()
+        let stderrOutput = String(data: stderrData, encoding: .utf8) ?? ""
+        if stderrOutput.lowercased().contains("incorrect password") ||
+           stderrOutput.lowercased().contains("sorry") {
+            return .wrongPassword
+        }
+        return .failed(stderrOutput)
+    }
 }
